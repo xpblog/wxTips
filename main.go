@@ -1,13 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	qrcode "github.com/skip2/go-qrcode"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
+	"wxTips/weather"
 )
 
-func main() {
+func main1() {
 	bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式
 
 	// 注册消息处理函数
@@ -58,6 +64,18 @@ func Timer(self *openwechat.Self) {
 		for true {
 			select {
 			case t := <-time.After(1 * time.Minute):
+
+				// 凌晨1点获取天气，如果天气异常，则提醒
+				hour := t.Hour()
+				if hour == 1 {
+					isSend, msg := getWeather("101010100")
+					if isSend {
+						friends, _ := self.Friends()
+						friend := friends.Search(1, func(friend *openwechat.Friend) bool { return friend.NickName == "鹏程" })
+						friend.SendText(msg)
+					}
+				}
+
 				weekday := t.Weekday()
 				// 周五
 				if weekday == 5 {
@@ -86,4 +104,50 @@ func MsgHandler(msg *openwechat.Message) {
 	if msg.IsText() && msg.Content == "ping" {
 		msg.ReplyText("ping")
 	}
+}
+
+func getWeather(addrCode string) (bool, string) {
+	url := "http://t.weather.itboy.net/api/weather/city/" + addrCode
+	resp, _ := http.Get(url)
+	text, _ := ioutil.ReadAll(resp.Body)
+
+	var weather weather.WeatherRes
+	json.Unmarshal(text, &weather)
+
+	today_weather := weather.Data.Forecast[0]
+	fmt.Println(today_weather)
+	high, low, type_, fl :=
+		strings.Trim(strings.ReplaceAll(strings.ReplaceAll(today_weather.High, "高温", ""), "℃", ""), " "),
+		strings.Trim(strings.ReplaceAll(strings.ReplaceAll(today_weather.Low, "低温", ""), "℃", ""), " "),
+		today_weather.Type,
+		strings.Trim(strings.ReplaceAll(today_weather.Fl, "级", ""), " ")
+
+	var msg = ""
+	highi, _ := strconv.Atoi(high)
+	if highi > 30 {
+		msg = "天气超过30度了"
+	}
+	lowi, _ := strconv.Atoi(low)
+	if lowi < 0 {
+		msg = msg + "那天气是相当的冷"
+	}
+	if strings.Contains(type_, "雨") {
+		msg = msg + " 有雨，带伞"
+	}
+	if strings.Contains(type_, "雪") {
+		msg = msg + " 有雪，穿厚衣"
+	}
+	fli, _ := strconv.Atoi(fl)
+	if fli > 5 {
+		msg = msg + " 风超级大的"
+	}
+
+	if len(msg) > 0 {
+		return true, msg
+	}
+	return false, ""
+}
+
+func main() {
+	getWeather("101010100")
 }
