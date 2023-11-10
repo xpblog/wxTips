@@ -13,7 +13,7 @@ import (
 	"wxTips/weather"
 )
 
-func main1() {
+func main() {
 	bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式
 
 	// 注册消息处理函数
@@ -146,8 +146,4 @@ func getWeather(addrCode string) (bool, string) {
 		return true, msg
 	}
 	return false, ""
-}
-
-func main() {
-	getWeather("101010100")
 }
