@@ -66,8 +66,8 @@ func Timer(self *openwechat.Self) {
 			case t := <-time.After(1 * time.Minute):
 
 				// 凌晨1点获取天气，如果天气异常，则提醒
-				hour := t.Hour()
-				if hour == 1 {
+				weatherTime := t.Format("15:04")
+				if weatherTime == "01:00" {
 					isSend, msg := getWeather("101010100")
 					if isSend {
 						friends, _ := self.Friends()
