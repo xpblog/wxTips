@@ -128,7 +128,7 @@ func getWeather(addrCode string) (bool, string) {
 		msg = "天气超过30度了"
 	}
 	lowi, _ := strconv.Atoi(low)
-	if lowi < 0 {
+	if lowi < -10 {
 		msg = msg + "那天气是相当的冷"
 	}
 	if strings.Contains(type_, "雨") {
