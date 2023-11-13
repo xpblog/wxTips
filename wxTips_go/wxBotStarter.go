@@ -4,22 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
-	qrcode "github.com/skip2/go-qrcode"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	"wxTips/utils"
 	"wxTips/weather"
 )
 
-func main() {
+func wxBotStarter() {
+	fmt.Print("开启了微信端")
 	bot := openwechat.DefaultBot(openwechat.Desktop) // 桌面模式
 
 	// 注册消息处理函数
 	bot.MessageHandler = MsgHandler
+	url := openwechat.GetQrcodeUrl
+	fmt.Println(url)
 	// 注册登陆二维码回调
-	bot.UUIDCallback = openwechat.PrintlnQrcodeUrl //ConsoleQrCode
+	bot.UUIDCallback = func(uuid string) {
+		utils.QrUrl = openwechat.GetQrcodeUrl(uuid)
+		fmt.Println(utils.QrUrl)
+	}
 
 	// 登陆
 	if err := bot.Login(); err != nil {
@@ -47,12 +53,6 @@ func main() {
 
 	// 阻塞主goroutine, 直到发生异常或者用户主动退出
 	bot.Block()
-}
-
-// 二维码打印到控制台
-func ConsoleQrCode(uuid string) {
-	q, _ := qrcode.New("https://login.weixin.qq.com/l/"+uuid, qrcode.Low)
-	fmt.Println(q.ToString(true))
 }
 
 // 定时提醒，
